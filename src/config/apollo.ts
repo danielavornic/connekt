@@ -3,6 +3,7 @@ import { expressMiddleware } from "@apollo/server/express4";
 import { Express } from "express";
 import { Driver } from "neo4j-driver";
 import { authResolvers } from "../resolvers/auth";
+import { verifyToken } from "../services/jwt";
 import { Context } from "../types/context";
 import { userTypeDefs } from "../types/user";
 
@@ -31,10 +32,24 @@ export const configureApolloMiddleware = (
   return app.use(
     "/graphql",
     expressMiddleware(server, {
-      context: async ({ req }) => ({
-        driver,
-        user: undefined,
-      }),
+      context: async ({ req }) => {
+        let user;
+        const authHeader = req.headers.authorization;
+
+        if (authHeader?.startsWith("Bearer ")) {
+          try {
+            const token = authHeader.split(" ")[1];
+            user = verifyToken(token);
+          } catch (error) {
+            console.error("Token verification failed:", error);
+          }
+        }
+
+        return {
+          driver,
+          user,
+        };
+      },
     })
   );
 };

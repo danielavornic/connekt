@@ -16,4 +16,9 @@ export const userQueries = {
     MATCH (u:User {email: $email}) 
     RETURN u
   `,
+
+  findById: `
+    MATCH (u:User {id: $userId})
+    RETURN u
+  `,
 };

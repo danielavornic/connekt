@@ -1,13 +1,31 @@
 import { LoginInput } from "@/types/user";
 import { Driver } from "neo4j-driver";
-import { generateToken } from "../services/jwt";
+import { generateToken, TokenPayload } from "../services/jwt";
 import { CreateUserInput, UserService } from "../services/user";
 
 interface Context {
   driver: Driver;
+  user?: TokenPayload;
 }
 
 export const authResolvers = {
+  Query: {
+    me: async (_: any, __: any, { driver, user }: Context) => {
+      if (!user) {
+        throw new Error("Not authenticated");
+      }
+
+      const userService = new UserService(driver);
+      const userData = await userService.findUserById(user.userId);
+
+      if (!userData) {
+        throw new Error("User not found");
+      }
+
+      return userData;
+    },
+  },
+
   Mutation: {
     register: async (
       _: any,

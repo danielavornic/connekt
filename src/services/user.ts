@@ -57,4 +57,16 @@ export class UserService {
   ): Promise<boolean> {
     return bcrypt.compare(password, hashedPassword);
   }
+
+  async findUserById(userId: string): Promise<User | null> {
+    const session = this.driver.session();
+    try {
+      const result = await session.run(userQueries.findById, { userId });
+
+      const user = result.records[0]?.get("u")?.properties as User;
+      return user || null;
+    } finally {
+      await session.close();
+    }
+  }
 }
