@@ -15,6 +15,11 @@ export interface User {
   updatedAt: Date;
 }
 
+export interface LoginInput {
+  email: string;
+  password: string;
+}
+
 export const userTypeDefs = gql`
   enum UserRole {
     CREATOR
@@ -42,7 +47,13 @@ export const userTypeDefs = gql`
     user: User!
   }
 
+  input LoginInput {
+    email: String!
+    password: String!
+  }
+
   extend type Mutation {
     register(input: CreateUserInput!): AuthPayload!
+    login(input: LoginInput!): AuthPayload!
   }
 `;
