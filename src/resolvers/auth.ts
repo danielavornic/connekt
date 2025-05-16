@@ -39,6 +39,13 @@ export const authResolvers = {
         throw new Error("User with this email already exists");
       }
 
+      const existingUserByUsername = await userService.findUserByUsername(
+        input.username
+      );
+      if (existingUserByUsername) {
+        throw new Error("User with this username already exists");
+      }
+
       const user = await userService.createUser(input);
 
       const token = generateToken(user);

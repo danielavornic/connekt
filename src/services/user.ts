@@ -51,6 +51,20 @@ export class UserService {
     }
   }
 
+  async findUserByUsername(username: string): Promise<User | null> {
+    const session = this.driver.session();
+    try {
+      const result = await session.run(userQueries.findByUsername, {
+        username,
+      });
+
+      const user = result.records[0]?.get("u")?.properties as User;
+      return user || null;
+    } finally {
+      await session.close();
+    }
+  }
+
   async verifyPassword(
     password: string,
     hashedPassword: string

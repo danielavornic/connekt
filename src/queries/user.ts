@@ -21,4 +21,9 @@ export const userQueries = {
     MATCH (u:User {id: $userId})
     RETURN u
   `,
+
+  findByUsername: `
+    MATCH (u:User {username: $username})
+    RETURN u
+  `,
 };
