@@ -11,8 +11,8 @@ export interface User {
   email: string;
   password: string;
   role: UserRole;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface LoginInput {

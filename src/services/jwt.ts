@@ -1,8 +1,8 @@
 import jwt from "jsonwebtoken";
 import { User, UserRole } from "../types/user";
 
-const JWT_SECRET: string = process.env.JWT_SECRET || "";
-const JWT_EXPIRES_IN: number = parseInt(process.env.JWT_EXPIRES_IN || "300000");
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_EXPIRES_IN: number = parseInt(process.env.JWT_EXPIRES_IN || "5m");
 
 export interface TokenPayload {
   userId: string;
@@ -10,6 +10,10 @@ export interface TokenPayload {
 }
 
 export const generateToken = (user: User): string => {
+  if (!JWT_SECRET) {
+    throw new Error("JWT_SECRET is not defined");
+  }
+
   const payload: TokenPayload = {
     userId: user.id,
     role: user.role,
@@ -19,5 +23,9 @@ export const generateToken = (user: User): string => {
 };
 
 export const verifyToken = (token: string): TokenPayload => {
+  if (!JWT_SECRET) {
+    throw new Error("JWT_SECRET is not defined");
+  }
+
   return jwt.verify(token, JWT_SECRET) as TokenPayload;
 };
