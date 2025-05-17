@@ -3,7 +3,9 @@ import { expressMiddleware } from "@apollo/server/express4";
 import { Express } from "express";
 import { Driver } from "neo4j-driver";
 import { authResolvers } from "../resolvers/auth";
+import { channelResolvers } from "../resolvers/channel";
 import { verifyToken } from "../services/jwt";
+import { channelTypesDefs } from "../types/channel";
 import { Context } from "../types/context";
 import { userTypeDefs } from "../types/user";
 
@@ -19,8 +21,8 @@ const baseTypeDefs = `#graphql
 
 export const createApolloServer = () => {
   return new ApolloServer<Context>({
-    typeDefs: [baseTypeDefs, userTypeDefs],
-    resolvers: [authResolvers],
+    typeDefs: [baseTypeDefs, userTypeDefs, channelTypesDefs],
+    resolvers: [authResolvers, channelResolvers],
   });
 };
 
