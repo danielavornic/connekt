@@ -29,4 +29,44 @@ export class ChannelService {
       await session.close();
     }
   }
+
+  async findChannelById(channelId: string): Promise<Channel | null> {
+    const session = this.driver.session();
+    try {
+      const result = await session.run(channelQueries.findChannelById, {
+        channelId,
+      });
+
+      const record = result.records[0];
+      return record ? record.get("channel") : null;
+    } finally {
+      await session.close();
+    }
+  }
+
+  async findMyChannels(userId: string): Promise<Channel[]> {
+    const session = this.driver.session();
+    try {
+      const result = await session.run(channelQueries.findMyChannels, {
+        userId,
+      });
+
+      return result.records.map((record) => record.get("channel")) || [];
+    } finally {
+      await session.close();
+    }
+  }
+
+  async findChannelsByUserId(userId: string): Promise<Channel[]> {
+    const session = this.driver.session();
+    try {
+      const result = await session.run(channelQueries.findChannelsByUserId, {
+        userId,
+      });
+
+      return result.records.map((record) => record.get("channel")) || [];
+    } finally {
+      await session.close();
+    }
+  }
 }
