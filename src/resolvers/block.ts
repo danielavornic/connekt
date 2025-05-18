@@ -1,5 +1,7 @@
 import { BlockService } from "../services/block";
+import { ChannelService } from "../services/channel";
 import {
+  BlockConnection,
   CreateBlockInput,
   DeleteBlockInput,
   UpdateBlockInput,
@@ -25,6 +27,15 @@ export const blockResolvers = {
     ) => {
       const blockService = new BlockService(driver);
       return blockService.findBlocksByChannelId(channelId);
+    },
+
+    blockConnections: async (
+      _: any,
+      { blockId }: { blockId: string },
+      { driver }: Context
+    ) => {
+      const blockService = new BlockService(driver);
+      return blockService.findBlockConnections(blockId);
     },
   },
 
@@ -92,6 +103,38 @@ export const blockResolvers = {
         success: true,
         message: "Block successfully deleted",
       };
+    },
+
+    connectBlockToChannel: async (
+      _: any,
+      { input }: { input: BlockConnection },
+      { driver, user }: Context
+    ) => {
+      if (!user) throw new Error("Not authenticated");
+
+      if (user.role !== UserRole.CREATOR) {
+        throw new Error("User is not a creator");
+      }
+
+      const blockService = new BlockService(driver);
+      const channelService = new ChannelService(driver);
+
+      const block = await blockService.findBlockById(input.blockId);
+      if (!block) throw new Error("Block not found");
+
+      const channel = await channelService.findChannelById(input.channelId);
+      if (!channel) throw new Error("Channel not found");
+
+      if (
+        block.createdBy.id !== user.userId &&
+        channel.createdBy.id !== user.userId
+      ) {
+        throw new Error(
+          "User must be the creator of either the block or the channel"
+        );
+      }
+
+      return blockService.connectBlockToChannel(input.blockId, input.channelId);
     },
   },
 };

@@ -25,6 +25,11 @@ export interface UpdateBlockInput extends DeleteBlockInput {
   content?: string;
 }
 
+export interface BlockConnection {
+  blockId: string;
+  channelId: string;
+}
+
 export const blockTypeDefs = gql`
   type BlockCreatorFull {
     id: ID!
@@ -81,19 +86,34 @@ export const blockTypeDefs = gql`
     blockId: String!
   }
 
+  input ConnectBlockToChannelInput {
+    blockId: String!
+    channelId: String!
+  }
+
   type DeleteBlockResponse {
     success: Boolean!
     message: String!
   }
 
+  type ConnectedChannel {
+    id: ID!
+    name: String!
+    description: String
+    createdAt: String!
+    createdBy: BlockCreatorLimited!
+  }
+
   extend type Query {
     block(id: ID!): Block
     blocksByChannelId(channelId: ID!): [Block!]!
+    connectedChannels(blockId: ID!): [ConnectedChannel!]!
   }
 
   extend type Mutation {
     createBlock(input: CreateBlockInput!): MyBlock!
     updateBlock(input: UpdateBlockInput!): MyBlock!
     deleteBlock(input: DeleteBlockInput!): DeleteBlockResponse!
+    connectBlockToChannel(input: ConnectBlockToChannelInput!): MyBlock!
   }
 `;

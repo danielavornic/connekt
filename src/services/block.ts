@@ -1,7 +1,12 @@
 import { Driver } from "neo4j-driver";
 import { v4 as uuidv4 } from "uuid";
 import { blockQueries } from "../queries/block";
-import { Block, CreateBlockInput, UpdateBlockInput } from "../types/block";
+import {
+  Block,
+  BlockConnection,
+  CreateBlockInput,
+  UpdateBlockInput,
+} from "../types/block";
 
 interface CreateBlockData extends CreateBlockInput {
   createdBy: string;
@@ -104,6 +109,43 @@ export class BlockService {
       );
 
       return result.records[0]?.get("success") ?? false;
+    } finally {
+      await session.close();
+    }
+  }
+
+  async connectBlockToChannel(
+    blockId: string,
+    channelId: string
+  ): Promise<Block> {
+    const session = this.driver.session();
+
+    try {
+      const result = await session.executeWrite((tx) =>
+        tx.run(blockQueries.connectBlockToChannel, {
+          blockId,
+          channelId,
+        })
+      );
+
+      const block = result.records[0]?.get("block");
+      if (!block) throw new Error("Failed to connect block to channel");
+
+      return block;
+    } finally {
+      await session.close();
+    }
+  }
+
+  async findBlockConnections(blockId: string): Promise<BlockConnection[]> {
+    const session = this.driver.session();
+
+    try {
+      const result = await session.executeRead((tx) =>
+        tx.run(blockQueries.findBlockConnections, { blockId })
+      );
+
+      return result.records.map((record) => record.get("connection"));
     } finally {
       await session.close();
     }
