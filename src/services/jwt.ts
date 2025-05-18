@@ -1,8 +1,9 @@
 import jwt from "jsonwebtoken";
+import ms from "ms";
 import { User, UserRole } from "../types/user";
 
 const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRES_IN: number = parseInt(process.env.JWT_EXPIRES_IN || "5m");
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "5m";
 
 export interface TokenPayload {
   userId: string;
@@ -19,7 +20,9 @@ export const generateToken = (user: User): string => {
     role: user.role,
   };
 
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  return jwt.sign(payload, JWT_SECRET, {
+    expiresIn: JWT_EXPIRES_IN as ms.StringValue,
+  });
 };
 
 export const verifyToken = (token: string): TokenPayload => {
