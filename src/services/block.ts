@@ -7,6 +7,7 @@ import {
   CreateBlockInput,
   UpdateBlockInput,
 } from "../types/block";
+import { UrlService } from "./url";
 
 interface CreateBlockData extends CreateBlockInput {
   createdBy: string;
@@ -26,12 +27,21 @@ export class BlockService {
       const now = new Date().toISOString();
       const blockId = uuidv4();
 
+      let title = data.title;
+      let description = data.description;
+
+      if (UrlService.isValidUrl(data.content)) {
+        const metadata = await UrlService.extractMetadata(data.content);
+        title = data.title || metadata.title;
+        description = data.description || metadata.description;
+      }
+
       const result = await session.executeWrite((tx) =>
         tx.run(blockQueries.createBlock, {
           blockId,
           channelId: data.channelId,
-          title: data.title ?? null,
-          description: data.description ?? null,
+          title: title ?? null,
+          description: description ?? null,
           content: data.content,
           createdBy: data.createdBy,
           now,
@@ -81,11 +91,23 @@ export class BlockService {
 
     try {
       const updatedAt = new Date().toISOString();
+
+      // If content is being updated, check if it's a URL
+      let title = input.title;
+      let description = input.description;
+
+      if (input.content && UrlService.isValidUrl(input.content)) {
+        const metadata = await UrlService.extractMetadata(input.content);
+        // Only use metadata if no title/description was provided in the update
+        title = input.title || metadata.title;
+        description = input.description || metadata.description;
+      }
+
       const result = await session.executeWrite((tx) =>
         tx.run(blockQueries.updateBlock, {
           blockId: input.blockId,
-          title: input.title ?? null,
-          description: input.description ?? null,
+          title: title ?? null,
+          description: description ?? null,
           content: input.content ?? null,
           updatedAt,
         })

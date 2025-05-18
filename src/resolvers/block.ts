@@ -50,6 +50,13 @@ export const blockResolvers = {
         throw new Error("User is not a creator");
       }
 
+      const channelService = new ChannelService(driver);
+      const channel = await channelService.findChannelById(input.channelId);
+      if (!channel) throw new Error("Channel not found");
+      if (channel.createdBy.id !== user.userId) {
+        throw new Error("User is not the creator of the channel");
+      }
+
       const blockService = new BlockService(driver);
       return blockService.createBlock({
         ...input,
