@@ -76,20 +76,63 @@ export const channelQueries = {
     RETURN c
   `,
 
-  deleteChannel: `    
+  getChannelBlocksInfo: `
     MATCH (c:Channel {id: $channelId})
+    MATCH (creator:User)-[:CREATED]->(c)
+    WITH c, creator
     
-    // delete all blocks connected to this channel
+    OPTIONAL MATCH (b:Block)-[:CONNECTED_TO]->(c)
+  
+    // for each block, get its connection count and creator
+    OPTIONAL MATCH (b)-[:CONNECTED_TO]->(otherChannel:Channel)
+    OPTIONAL MATCH (blockCreator:User)-[:CREATED]->(b)
+    
+    WITH c.id as channelId, creator.id as channelCreatorId,
+         b, blockCreator, COUNT(otherChannel) as connectionCount
+    
+    WITH channelId, channelCreatorId,
+         collect({
+           blockId: b.id,
+           blockCreatorId: blockCreator.id,
+           connectionCount: connectionCount
+         }) as blocks
+    
+    RETURN {
+      channelId: channelId,
+      channelCreatorId: channelCreatorId,
+      blocks: blocks
+    } as info
+  `,
+
+  deleteChannelBlocks: `
+    // blocks that are only connected to this channel - should be deleted
+    MATCH (c:Channel {id: $channelId})
+    MATCH (b:Block)-[:CONNECTED_TO]->(c)
+    WITH b, c
+    MATCH (b)-[r:CONNECTED_TO]->(channel:Channel)
+    WITH b, c, COUNT(channel) as totalConnections
+    WHERE totalConnections = 1
+    OPTIONAL MATCH (b)-[r]-()
+    DELETE r, b
+    
+    // blocks that are connected to other channels - should only have their connection removed
+    WITH 1 as foo
+    MATCH (c:Channel {id: $channelId})
+    MATCH (b:Block)-[r:CONNECTED_TO]->(c)
+    WITH b, r, c
+    MATCH (b)-[:CONNECTED_TO]->(channel:Channel)
+    WITH b, r, COUNT(channel) as totalConnections
+    WHERE totalConnections > 1
+    DELETE r
+    
+    RETURN true as success
+  `,
+
+  deleteChannel: `
+    MATCH (c:Channel {id: $channelId})
     WITH c
-    OPTIONAL MATCH (b:Block)-[r:CONNECTED_TO]->(c)
-    WITH c, b, r
-    OPTIONAL MATCH (b)-[br]-()
-    DELETE br, b
-    
-    WITH c
-    OPTIONAL MATCH (c)-[cr]-()
-    DELETE cr, c
-    
+    OPTIONAL MATCH (c)-[r]-()
+    DELETE r, c
     RETURN true as success
   `,
 };

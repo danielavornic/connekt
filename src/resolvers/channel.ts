@@ -85,6 +85,7 @@ export const channelResolvers = {
       if (!user) throw new Error("Not authenticated");
 
       const channelService = new ChannelService(driver);
+
       const channel = await channelService.findChannelById(input.channelId);
       if (!channel) throw new Error("Channel not found");
 
@@ -93,7 +94,6 @@ export const channelResolvers = {
       }
 
       const success = await channelService.deleteChannel(input.channelId);
-
       if (!success) {
         throw new Error("Failed to delete channel");
       }

@@ -165,4 +165,35 @@ export const blockQueries = {
     } as connection
     ORDER BY ch.createdAt DESC
   `,
+
+  getBlockConnectionInfo: `
+    MATCH (b:Block {id: $blockId})
+    MATCH (creator:User)-[:CREATED]->(b)
+    WITH b, creator
+    MATCH (b)-[r:CONNECTED_TO]->(ch:Channel)
+    WITH b, creator, COLLECT(ch) as channels, COUNT(r) as connectionCount
+    OPTIONAL MATCH (b)-[:CONNECTED_TO]->(targetChannel:Channel {id: $channelId})
+    OPTIONAL MATCH (targetChannel)<-[:CREATED]-(channelCreator:User)
+    RETURN {
+      blockCreatorId: creator.id,
+      channelCreatorId: channelCreator.id,
+      connectionCount: connectionCount,
+      hasTargetChannel: targetChannel IS NOT NULL,
+      channels: [ch IN channels | ch.id]
+    } as info
+  `,
+
+  removeBlockConnection: `
+    MATCH (b:Block {id: $blockId})-[r:CONNECTED_TO]->(ch:Channel {id: $channelId})
+    DELETE r
+    RETURN true as success
+  `,
+
+  deleteBlockCompletely: `
+    MATCH (b:Block {id: $blockId})
+    WITH b
+    OPTIONAL MATCH (b)-[r]-()
+    DELETE r, b
+    RETURN true as success
+  `,
 };

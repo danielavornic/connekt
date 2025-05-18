@@ -1,4 +1,4 @@
-import { Driver } from "neo4j-driver";
+import { Driver, Integer } from "neo4j-driver";
 import { v4 as uuidv4 } from "uuid";
 import { blockQueries } from "../queries/block";
 import {
@@ -100,14 +100,54 @@ export class BlockService {
     }
   }
 
-  async deleteBlock(blockId: string): Promise<boolean> {
+  async getBlockConnectionInfo(
+    blockId: string,
+    channelId: string
+  ): Promise<{
+    blockCreatorId: string;
+    channelCreatorId: string;
+    connectionCount: number;
+    hasTargetChannel: boolean;
+    channels: string[];
+  } | null> {
     const session = this.driver.session();
+    try {
+      const result = await session.executeRead((tx) =>
+        tx.run(blockQueries.getBlockConnectionInfo, { blockId, channelId })
+      );
+      const info = result.records[0]?.get("info");
+      if (!info) return null;
 
+      return {
+        ...info,
+        connectionCount: (info.connectionCount as Integer).toNumber(),
+      };
+    } finally {
+      await session.close();
+    }
+  }
+
+  async removeBlockConnection(
+    blockId: string,
+    channelId: string
+  ): Promise<boolean> {
+    const session = this.driver.session();
     try {
       const result = await session.executeWrite((tx) =>
-        tx.run(blockQueries.deleteBlock, { blockId })
+        tx.run(blockQueries.removeBlockConnection, { blockId, channelId })
       );
+      return result.records[0]?.get("success") ?? false;
+    } finally {
+      await session.close();
+    }
+  }
 
+  async deleteBlockCompletely(blockId: string): Promise<boolean> {
+    const session = this.driver.session();
+    try {
+      const result = await session.executeWrite((tx) =>
+        tx.run(blockQueries.deleteBlockCompletely, { blockId })
+      );
       return result.records[0]?.get("success") ?? false;
     } finally {
       await session.close();
@@ -137,7 +177,7 @@ export class BlockService {
     }
   }
 
-  async findBlockConnections(blockId: string): Promise<BlockConnection[]> {
+  async findConnectedChannels(blockId: string): Promise<BlockConnection[]> {
     const session = this.driver.session();
 
     try {
