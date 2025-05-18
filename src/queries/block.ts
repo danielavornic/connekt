@@ -22,7 +22,7 @@ export const blockQueries = {
       updatedAt: b.updatedAt,
       channel: {
         id: ch.id,
-        name: ch.name,
+        title: ch.title,
         description: ch.description
       },
       createdBy: {
@@ -47,7 +47,7 @@ export const blockQueries = {
       updatedAt: b.updatedAt,
       channel: {
         id: ch.id,
-        name: ch.name,
+        title: ch.title,
         description: ch.description
       },
       createdBy: {
@@ -69,7 +69,7 @@ export const blockQueries = {
       updatedAt: b.updatedAt,
       channel: {
         id: ch.id,
-        name: ch.name,
+        title: ch.title,
         description: ch.description
       },
       createdBy: {

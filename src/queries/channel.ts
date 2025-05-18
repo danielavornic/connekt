@@ -2,7 +2,7 @@ export const channelQueries = {
   createChannel: `
     CREATE (c:Channel {
       id: $channelId,
-      name: $name,
+      title: $title,
       description: CASE WHEN $description IS NOT NULL THEN $description END,
       createdAt: $now,
       updatedAt: $now
@@ -17,7 +17,7 @@ export const channelQueries = {
     MATCH (u:User)-[:CREATED]->(c:Channel {id: $channelId})
     RETURN {
       id: c.id,
-      name: c.name,
+      title: c.title,
       description: c.description,
       createdAt: c.createdAt,
       updatedAt: c.updatedAt,
@@ -33,7 +33,7 @@ export const channelQueries = {
     MATCH (u:User {id: $userId})-[:CREATED]->(c:Channel)
     RETURN {
       id: c.id,
-      name: c.name,
+      title: c.title,
       description: c.description,
       createdAt: c.createdAt,
       updatedAt: c.updatedAt,
@@ -53,7 +53,7 @@ export const channelQueries = {
     MATCH (u:User {id: $userId})-[:CREATED]->(c:Channel)
     RETURN {
       id: c.id,
-      name: c.name,
+      title: c.title,
       description: c.description,
       createdAt: c.createdAt,
       updatedAt: c.updatedAt,
@@ -69,7 +69,7 @@ export const channelQueries = {
   updateChannel: `
     MATCH (u:User)-[:CREATED]->(c:Channel {id: $channelId})
     SET c += {
-      name: CASE WHEN $name IS NOT NULL THEN $name ELSE c.name END,
+      title: CASE WHEN $title IS NOT NULL THEN $title ELSE c.title END,
       description: CASE WHEN $description IS NOT NULL THEN $description ELSE c.description END,
       updatedAt: $updatedAt
     }

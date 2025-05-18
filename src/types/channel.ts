@@ -1,7 +1,7 @@
 import { User } from "./user";
 
 export interface CreateChannelInput {
-  name: string;
+  title: string;
   description?: string | null;
 }
 
@@ -17,7 +17,7 @@ export interface DeleteChannelInput {
 }
 
 export interface UpdateChannelInput extends DeleteChannelInput {
-  name?: string;
+  title?: string;
   description?: string;
 }
 
@@ -41,7 +41,7 @@ export const channelTypesDefs = `
 
   type Channel {
     id: ID!
-    name: String!
+    title: String!
     description: String
     createdAt: String!
     updatedAt: String!
@@ -49,7 +49,7 @@ export const channelTypesDefs = `
 
   type MyChannel {
     id: ID!
-    name: String!
+    title: String!
     description: String
     createdAt: String!
     updatedAt: String!
@@ -58,7 +58,7 @@ export const channelTypesDefs = `
 
   type PublicChannel {
     id: ID!
-    name: String!
+    title: String!
     description: String
     createdAt: String!
     updatedAt: String!
@@ -66,7 +66,7 @@ export const channelTypesDefs = `
   }
 
   input CreateChannelInput {
-    name: String!
+    title: String!
     description: String
   }
 
@@ -80,7 +80,7 @@ export const channelTypesDefs = `
 
   input UpdateChannelInput {
     channelId: String!
-    name: String
+    title: String
     description: String
   }
 
@@ -89,9 +89,9 @@ export const channelTypesDefs = `
   }
 
   type Query {
-    findMyChannels: [MyChannel!]!
-    findChannelById(input: FindChannelByIdInput!): PublicChannel
-    findChannelsByUserId(input: FindChannelsByUserIdInput!): [PublicChannel!]!
+    myChannels: [MyChannel!]!
+    channel(input: FindChannelByIdInput!): PublicChannel
+    channelsByUserId(input: FindChannelsByUserIdInput!): [PublicChannel!]!
   }
 
   type DeleteChannelResponse {

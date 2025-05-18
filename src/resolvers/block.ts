@@ -5,11 +5,7 @@ import { UserRole } from "../types/user";
 
 export const blockResolvers = {
   Query: {
-    findBlockById: async (
-      _: any,
-      { id }: { id: string },
-      { driver }: Context
-    ) => {
+    block: async (_: any, { id }: { id: string }, { driver }: Context) => {
       const blockService = new BlockService(driver);
       const block = await blockService.findBlockById(id);
 
@@ -18,7 +14,7 @@ export const blockResolvers = {
       return block;
     },
 
-    findBlocksByChannelId: async (
+    blocksByChannelId: async (
       _: any,
       { channelId }: { channelId: string },
       { driver }: Context

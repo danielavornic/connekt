@@ -1,22 +1,18 @@
 import { gql } from "graphql-tag";
 import { User } from "./user";
 
-export interface Block {
-  id: string;
-  channelId: string;
-  content: string;
-  title?: string;
-  description?: string;
-  createdAt: string;
-  updatedAt: string;
-  createdBy: User;
-}
-
 export interface CreateBlockInput {
   channelId: string;
   content: string;
   title?: string;
   description?: string;
+}
+
+export interface Block extends CreateBlockInput {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: User;
 }
 
 export const blockTypeDefs = gql`
@@ -65,8 +61,8 @@ export const blockTypeDefs = gql`
   }
 
   extend type Query {
-    findBlockById(id: ID!): Block
-    findBlocksByChannelId(channelId: ID!): [Block!]!
+    block(id: ID!): Block
+    blocksByChannelId(channelId: ID!): [Block!]!
   }
 
   extend type Mutation {
