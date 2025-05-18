@@ -3,7 +3,7 @@ export const channelQueries = {
     CREATE (c:Channel {
       id: $channelId,
       name: $name,
-      description: $description,
+      description: CASE WHEN $description IS NOT NULL THEN $description END,
       createdAt: $now
     })
     WITH c
@@ -67,11 +67,14 @@ export const channelQueries = {
 
   updateChannel: `
     MATCH (u:User)-[:CREATED]->(c:Channel {id: $channelId})
-    SET c.name = $name, c.description = $description
+    SET c += {
+      name: CASE WHEN $name IS NOT NULL THEN $name ELSE c.name END,
+      description: CASE WHEN $description IS NOT NULL THEN $description ELSE c.description END
+    }
     RETURN c
   `,
 
-  deleteChannel: `
+  deleteChannel: `    
     MATCH (c:Channel {id: $channelId})
     WITH c
     OPTIONAL MATCH (c)-[r]-() // delete all relationships related to the channel

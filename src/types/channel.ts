@@ -1,25 +1,24 @@
 import { User } from "./user";
 
-export interface Channel {
-  id: string;
+export interface CreateChannelInput {
   name: string;
-  description: string;
+  description?: string | null;
+}
+
+export interface Channel extends CreateChannelInput {
+  id: string;
   createdAt: string;
   updatedAt: string;
   createdBy: User;
 }
 
-export interface CreateChannelInput {
-  name: string;
-  description: string;
-}
-
-export interface UpdateChannelInput extends CreateChannelInput {
-  channelId: string;
-}
-
 export interface DeleteChannelInput {
   channelId: string;
+}
+
+export interface UpdateChannelInput extends DeleteChannelInput {
+  name?: string;
+  description?: string;
 }
 
 export const channelTypesDefs = `
@@ -43,7 +42,7 @@ export const channelTypesDefs = `
   type Channel {
     id: ID!
     name: String!
-    description: String!
+    description: String
     createdAt: String!
     updatedAt: String!
   }
@@ -51,7 +50,7 @@ export const channelTypesDefs = `
   type MyChannel {
     id: ID!
     name: String!
-    description: String!
+    description: String
     createdAt: String!
     updatedAt: String!
     createdBy: ChannelCreatorFull!
@@ -60,7 +59,7 @@ export const channelTypesDefs = `
   type PublicChannel {
     id: ID!
     name: String!
-    description: String!
+    description: String
     createdAt: String!
     updatedAt: String!
     createdBy: ChannelCreatorLimited!
@@ -68,7 +67,7 @@ export const channelTypesDefs = `
 
   input CreateChannelInput {
     name: String!
-    description: String!
+    description: String
   }
 
   input FindChannelByIdInput {

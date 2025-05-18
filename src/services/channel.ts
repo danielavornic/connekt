@@ -23,7 +23,7 @@ export class ChannelService {
       const result = await session.run(channelQueries.createChannel, {
         channelId,
         name: input.name,
-        description: input.description,
+        description: input.description ?? null,
         createdBy: input.createdBy,
         now,
       });
@@ -79,8 +79,8 @@ export class ChannelService {
     try {
       const result = await session.run(channelQueries.updateChannel, {
         channelId: input.channelId,
-        name: input.name,
-        description: input.description,
+        name: input.name ?? null,
+        description: "description" in input ? input.description : null,
       });
 
       return result.records[0].get("c").properties as Channel;
