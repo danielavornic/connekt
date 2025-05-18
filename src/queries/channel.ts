@@ -78,10 +78,18 @@ export const channelQueries = {
 
   deleteChannel: `    
     MATCH (c:Channel {id: $channelId})
+    
+    // delete all blocks connected to this channel
     WITH c
-    OPTIONAL MATCH (c)-[r]-() // delete all relationships related to the channel
-    WITH c, r
-    DELETE r, c
+    OPTIONAL MATCH (b:Block)-[r:CONNECTED_TO]->(c)
+    WITH c, b, r
+    OPTIONAL MATCH (b)-[br]-()
+    DELETE br, b
+    
+    WITH c
+    OPTIONAL MATCH (c)-[cr]-()
+    DELETE cr, c
+    
     RETURN true as success
   `,
 };
