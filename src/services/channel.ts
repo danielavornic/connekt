@@ -76,11 +76,13 @@ export class ChannelService {
 
   async updateChannel(input: UpdateChannelInput): Promise<Channel> {
     const session = this.driver.session();
+    const now = new Date().toISOString();
     try {
       const result = await session.run(channelQueries.updateChannel, {
         channelId: input.channelId,
         name: input.name ?? null,
-        description: "description" in input ? input.description : null,
+        description: input.description ?? null,
+        updatedAt: now,
       });
 
       return result.records[0].get("c").properties as Channel;
