@@ -9,7 +9,7 @@ import { UserRole } from "../types/user";
 
 export const channelResolvers = {
   Query: {
-    findChannelById: async (
+    channel: async (
       _: any,
       { input }: { input: { channelId: string } },
       { driver }: Context
@@ -22,14 +22,14 @@ export const channelResolvers = {
       return channel;
     },
 
-    findMyChannels: async (_: any, __: any, { driver, user }: Context) => {
+    myChannels: async (_: any, __: any, { driver, user }: Context) => {
       if (!user) throw new Error("Not authenticated");
 
       const channelService = new ChannelService(driver);
       return channelService.findMyChannels(user.userId);
     },
 
-    findChannelsByUserId: async (
+    channelsByUserId: async (
       _: any,
       { input }: { input: { userId: string } },
       { driver }: Context
@@ -85,6 +85,7 @@ export const channelResolvers = {
       if (!user) throw new Error("Not authenticated");
 
       const channelService = new ChannelService(driver);
+
       const channel = await channelService.findChannelById(input.channelId);
       if (!channel) throw new Error("Channel not found");
 
@@ -93,7 +94,6 @@ export const channelResolvers = {
       }
 
       const success = await channelService.deleteChannel(input.channelId);
-
       if (!success) {
         throw new Error("Failed to delete channel");
       }

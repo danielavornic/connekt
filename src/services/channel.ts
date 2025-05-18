@@ -1,4 +1,4 @@
-import { Driver } from "neo4j-driver";
+import { Driver, Integer } from "neo4j-driver";
 import { v4 as uuidv4 } from "uuid";
 import { channelQueries } from "../queries/channel";
 import {
@@ -22,7 +22,7 @@ export class ChannelService {
 
       const result = await session.run(channelQueries.createChannel, {
         channelId,
-        name: input.name,
+        title: input.title,
         description: input.description ?? null,
         createdBy: input.createdBy,
         now,
@@ -80,7 +80,7 @@ export class ChannelService {
     try {
       const result = await session.run(channelQueries.updateChannel, {
         channelId: input.channelId,
-        name: input.name ?? null,
+        title: input.title ?? null,
         description: input.description ?? null,
         updatedAt: now,
       });
@@ -91,14 +91,47 @@ export class ChannelService {
     }
   }
 
+  async getChannelBlocksInfo(channelId: string): Promise<{
+    channelId: string;
+    channelCreatorId: string;
+    blocks: Array<{
+      blockId: string;
+      blockCreatorId: string;
+      connectionCount: number;
+    }>;
+  } | null> {
+    const session = this.driver.session();
+    try {
+      const result = await session.executeRead((tx) =>
+        tx.run(channelQueries.getChannelBlocksInfo, { channelId })
+      );
+      const info = result.records[0]?.get("info");
+      if (!info) return null;
+
+      return {
+        ...info,
+        blocks: info.blocks.map((block: { connectionCount: Integer }) => ({
+          ...block,
+          connectionCount: (block.connectionCount as Integer).toNumber(),
+        })),
+      };
+    } finally {
+      await session.close();
+    }
+  }
+
   async deleteChannel(channelId: string): Promise<boolean> {
     const session = this.driver.session();
     try {
-      const result = await session.run(channelQueries.deleteChannel, {
-        channelId,
-      });
+      await session.executeWrite((tx) =>
+        tx.run(channelQueries.deleteChannelBlocks, { channelId })
+      );
 
-      return result.records[0]?.get("success") || false;
+      const result = await session.executeWrite((tx) =>
+        tx.run(channelQueries.deleteChannel, { channelId })
+      );
+
+      return result.records[0]?.get("success") ?? false;
     } finally {
       await session.close();
     }
