@@ -1,7 +1,7 @@
 import { Driver } from "neo4j-driver";
 import { v4 as uuidv4 } from "uuid";
 import { blockQueries } from "../queries/block";
-import { Block, CreateBlockInput } from "../types/block";
+import { Block, CreateBlockInput, UpdateBlockInput } from "../types/block";
 
 interface CreateBlockData extends CreateBlockInput {
   createdBy: string;
@@ -66,6 +66,44 @@ export class BlockService {
       );
 
       return result.records.map((record) => record.get("block"));
+    } finally {
+      await session.close();
+    }
+  }
+
+  async updateBlock(input: UpdateBlockInput): Promise<Block> {
+    const session = this.driver.session();
+
+    try {
+      const updatedAt = new Date().toISOString();
+      const result = await session.executeWrite((tx) =>
+        tx.run(blockQueries.updateBlock, {
+          blockId: input.blockId,
+          title: input.title ?? null,
+          description: input.description ?? null,
+          content: input.content ?? null,
+          updatedAt,
+        })
+      );
+
+      const block = result.records[0]?.get("block");
+      if (!block) throw new Error("Failed to update block");
+
+      return block;
+    } finally {
+      await session.close();
+    }
+  }
+
+  async deleteBlock(blockId: string): Promise<boolean> {
+    const session = this.driver.session();
+
+    try {
+      const result = await session.executeWrite((tx) =>
+        tx.run(blockQueries.deleteBlock, { blockId })
+      );
+
+      return result.records[0]?.get("success") ?? false;
     } finally {
       await session.close();
     }
