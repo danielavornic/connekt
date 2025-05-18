@@ -1,9 +1,44 @@
 import { ChannelService } from "../services/channel";
-import { CreateChannelInput } from "../types/channel";
+import {
+  CreateChannelInput,
+  DeleteChannelInput,
+  UpdateChannelInput,
+} from "../types/channel";
 import { Context } from "../types/context";
 import { UserRole } from "../types/user";
 
 export const channelResolvers = {
+  Query: {
+    findChannelById: async (
+      _: any,
+      { input }: { input: { channelId: string } },
+      { driver }: Context
+    ) => {
+      const channelService = new ChannelService(driver);
+      const channel = await channelService.findChannelById(input.channelId);
+
+      if (!channel) throw new Error("Channel not found");
+
+      return channel;
+    },
+
+    findMyChannels: async (_: any, __: any, { driver, user }: Context) => {
+      if (!user) throw new Error("Not authenticated");
+
+      const channelService = new ChannelService(driver);
+      return channelService.findMyChannels(user.userId);
+    },
+
+    findChannelsByUserId: async (
+      _: any,
+      { input }: { input: { userId: string } },
+      { driver }: Context
+    ) => {
+      const channelService = new ChannelService(driver);
+      return channelService.findChannelsByUserId(input.userId);
+    },
+  },
+
   Mutation: {
     createChannel: async (
       _: any,
@@ -22,36 +57,51 @@ export const channelResolvers = {
         createdBy: user.userId,
       });
     },
-  },
 
-  Query: {
-    findMyChannels: async (_: any, __: any, { driver, user }: Context) => {
+    updateChannel: async (
+      _: any,
+      { input }: { input: UpdateChannelInput },
+      { driver, user }: Context
+    ) => {
       if (!user) throw new Error("Not authenticated");
 
       const channelService = new ChannelService(driver);
-      return channelService.findMyChannels(user.userId);
-    },
-
-    findChannelById: async (
-      _: any,
-      { input }: { input: { channelId: string } },
-      { driver }: Context
-    ) => {
-      const channelService = new ChannelService(driver);
       const channel = await channelService.findChannelById(input.channelId);
-
       if (!channel) throw new Error("Channel not found");
 
-      return channel;
+      if (channel.createdBy.id !== user.userId) {
+        throw new Error("User is not the creator of the channel");
+      }
+
+      const updatedChannel = await channelService.updateChannel(input);
+      return updatedChannel;
     },
 
-    findChannelsByUserId: async (
+    deleteChannel: async (
       _: any,
-      { input }: { input: { userId: string } },
-      { driver }: Context
+      { input }: { input: DeleteChannelInput },
+      { driver, user }: Context
     ) => {
+      if (!user) throw new Error("Not authenticated");
+
       const channelService = new ChannelService(driver);
-      return channelService.findChannelsByUserId(input.userId);
+      const channel = await channelService.findChannelById(input.channelId);
+      if (!channel) throw new Error("Channel not found");
+
+      if (channel.createdBy.id !== user.userId) {
+        throw new Error("User is not the creator of the channel");
+      }
+
+      const success = await channelService.deleteChannel(input.channelId);
+
+      if (!success) {
+        throw new Error("Failed to delete channel");
+      }
+
+      return {
+        success: true,
+        message: "Channel successfully deleted",
+      };
     },
   },
 };

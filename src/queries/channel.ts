@@ -64,4 +64,19 @@ export const channelQueries = {
     } as channel
     ORDER BY c.createdAt DESC
   `,
+
+  updateChannel: `
+    MATCH (u:User)-[:CREATED]->(c:Channel {id: $channelId})
+    SET c.name = $name, c.description = $description
+    RETURN c
+  `,
+
+  deleteChannel: `
+    MATCH (c:Channel {id: $channelId})
+    WITH c
+    OPTIONAL MATCH (c)-[r]-() // delete all relationships related to the channel
+    WITH c, r
+    DELETE r, c
+    RETURN true as success
+  `,
 };

@@ -14,6 +14,14 @@ export interface CreateChannelInput {
   description: string;
 }
 
+export interface UpdateChannelInput extends CreateChannelInput {
+  channelId: string;
+}
+
+export interface DeleteChannelInput {
+  channelId: string;
+}
+
 export const channelTypesDefs = `
   # for authenticated user's own data
   type ChannelCreatorFull {
@@ -71,13 +79,30 @@ export const channelTypesDefs = `
     userId: String!
   }
 
+  input UpdateChannelInput {
+    channelId: String!
+    name: String
+    description: String
+  }
+
+  input DeleteChannelInput {
+    channelId: String!
+  }
+
   type Query {
     findMyChannels: [MyChannel!]!
     findChannelById(input: FindChannelByIdInput!): PublicChannel
     findChannelsByUserId(input: FindChannelsByUserIdInput!): [PublicChannel!]!
   }
 
+  type DeleteChannelResponse {
+    success: Boolean!
+    message: String!
+  }
+
   type Mutation {
     createChannel(input: CreateChannelInput!): Channel
+    updateChannel(input: UpdateChannelInput!): Channel
+    deleteChannel(input: DeleteChannelInput!): DeleteChannelResponse!
   }
 `;

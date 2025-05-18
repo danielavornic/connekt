@@ -1,7 +1,11 @@
 import { Driver } from "neo4j-driver";
 import { v4 as uuidv4 } from "uuid";
 import { channelQueries } from "../queries/channel";
-import { Channel, CreateChannelInput } from "../types/channel";
+import {
+  Channel,
+  CreateChannelInput,
+  UpdateChannelInput,
+} from "../types/channel";
 
 interface CreateChannelData extends CreateChannelInput {
   createdBy: string;
@@ -65,6 +69,34 @@ export class ChannelService {
       });
 
       return result.records.map((record) => record.get("channel")) || [];
+    } finally {
+      await session.close();
+    }
+  }
+
+  async updateChannel(input: UpdateChannelInput): Promise<Channel> {
+    const session = this.driver.session();
+    try {
+      const result = await session.run(channelQueries.updateChannel, {
+        channelId: input.channelId,
+        name: input.name,
+        description: input.description,
+      });
+
+      return result.records[0].get("c").properties as Channel;
+    } finally {
+      await session.close();
+    }
+  }
+
+  async deleteChannel(channelId: string): Promise<boolean> {
+    const session = this.driver.session();
+    try {
+      const result = await session.run(channelQueries.deleteChannel, {
+        channelId,
+      });
+
+      return result.records[0]?.get("success") || false;
     } finally {
       await session.close();
     }
