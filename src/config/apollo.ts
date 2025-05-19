@@ -5,10 +5,12 @@ import { Driver } from "neo4j-driver";
 import { authResolvers } from "../resolvers/auth";
 import { blockResolvers } from "../resolvers/block";
 import { channelResolvers } from "../resolvers/channel";
+import { searchResolvers } from "../resolvers/search";
 import { verifyToken } from "../services/jwt";
 import { blockTypeDefs } from "../types/block";
 import { channelTypesDefs } from "../types/channel";
 import { Context } from "../types/context";
+import { searchTypeDefs } from "../types/search";
 import { userTypeDefs } from "../types/user";
 
 const baseTypeDefs = `#graphql
@@ -23,8 +25,19 @@ const baseTypeDefs = `#graphql
 
 export const createApolloServer = () => {
   return new ApolloServer<Context>({
-    typeDefs: [baseTypeDefs, userTypeDefs, channelTypesDefs, blockTypeDefs],
-    resolvers: [authResolvers, channelResolvers, blockResolvers],
+    typeDefs: [
+      baseTypeDefs,
+      userTypeDefs,
+      channelTypesDefs,
+      blockTypeDefs,
+      searchTypeDefs,
+    ],
+    resolvers: [
+      authResolvers,
+      channelResolvers,
+      blockResolvers,
+      searchResolvers,
+    ],
   });
 };
 
