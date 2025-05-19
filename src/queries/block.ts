@@ -58,8 +58,26 @@ export const blockQueries = {
     } as block
   `,
 
-  findBlocksByChannelId: `
-    MATCH (u:User)-[:CREATED]->(b:Block)-[:CONNECTED_TO]->(ch:Channel {id: $channelId})
+  searchBlocks: `
+    MATCH (u:User)-[:CREATED]->(b:Block)-[:CONNECTED_TO]->(ch:Channel)
+    WHERE CASE
+      WHEN $channelId IS NOT NULL AND $channelId <> '' THEN ch.id = $channelId
+      ELSE true
+    END
+    AND CASE
+      WHEN $query IS NOT NULL AND $query <> '' THEN (b.title =~ $query OR b.description =~ $query OR b.content =~ $query)
+      ELSE true
+    END
+    WITH count(b) as totalCount
+    MATCH (u:User)-[:CREATED]->(b:Block)-[:CONNECTED_TO]->(ch:Channel)
+    WHERE CASE
+      WHEN $channelId IS NOT NULL AND $channelId <> '' THEN ch.id = $channelId
+      ELSE true
+    END
+    AND CASE
+      WHEN $query IS NOT NULL AND $query <> '' THEN (b.title =~ $query OR b.description =~ $query OR b.content =~ $query)
+      ELSE true
+    END
     RETURN {
       id: b.id,
       title: b.title,
@@ -77,8 +95,11 @@ export const blockQueries = {
         username: u.username,
         createdAt: u.createdAt
       }
-    } as block
+    } as result,
+    totalCount
     ORDER BY b.createdAt DESC
+    SKIP $offset
+    LIMIT $limit
   `,
 
   updateBlock: `

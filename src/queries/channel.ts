@@ -49,8 +49,26 @@ export const channelQueries = {
     ORDER BY c.createdAt DESC
   `,
 
-  findChannelsByUserId: `
-    MATCH (u:User {id: $userId})-[:CREATED]->(c:Channel)
+  searchChannels: `
+    MATCH (u:User)-[:CREATED]->(c:Channel)
+    WHERE CASE
+      WHEN $userId IS NOT NULL AND $userId <> '' THEN u.id = $userId
+      ELSE true
+    END
+    AND CASE
+      WHEN $query IS NOT NULL AND $query <> '' THEN (c.title =~ $query OR c.description =~ $query)
+      ELSE true
+    END
+    WITH count(c) as totalCount
+    MATCH (u:User)-[:CREATED]->(c:Channel)
+    WHERE CASE
+      WHEN $userId IS NOT NULL AND $userId <> '' THEN u.id = $userId
+      ELSE true
+    END
+    AND CASE
+      WHEN $query IS NOT NULL AND $query <> '' THEN (c.title =~ $query OR c.description =~ $query)
+      ELSE true
+    END
     RETURN {
       id: c.id,
       title: c.title,
@@ -62,8 +80,11 @@ export const channelQueries = {
         username: u.username,
         createdAt: u.createdAt
       }
-    } as channel
+    } as result,
+    totalCount
     ORDER BY c.createdAt DESC
+    SKIP $offset
+    LIMIT $limit
   `,
 
   updateChannel: `

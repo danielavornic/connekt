@@ -2,9 +2,11 @@ import { BlockService } from "../services/block";
 import { ChannelService } from "../services/channel";
 import {
   BlockConnection,
+  BlocksByChannelInput,
   CreateBlockInput,
   UpdateBlockInput,
 } from "../types/block";
+import { SearchPaginationInput } from "../types/common";
 import { Context } from "../types/context";
 import { UserRole } from "../types/user";
 
@@ -21,11 +23,20 @@ export const blockResolvers = {
 
     blocksByChannelId: async (
       _: any,
-      { channelId }: { channelId: string },
+      { input }: { input: BlocksByChannelInput },
       { driver }: Context
     ) => {
       const blockService = new BlockService(driver);
-      return blockService.findBlocksByChannelId(channelId);
+      return blockService.searchBlocksByChannel(input);
+    },
+
+    searchBlocks: async (
+      _: any,
+      { input }: { input: SearchPaginationInput },
+      { driver }: Context
+    ) => {
+      const blockService = new BlockService(driver);
+      return blockService.searchBlocks(input);
     },
 
     connectedChannels: async (

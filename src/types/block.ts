@@ -1,4 +1,5 @@
 import { gql } from "graphql-tag";
+import { PaginatedResult } from "./common";
 import { User } from "./user";
 
 export interface CreateBlockInput {
@@ -25,6 +26,18 @@ export interface UpdateBlockInput extends BlockConnection {
   description?: string;
   content?: string;
 }
+
+export interface BlocksByChannelInput {
+  channelId: string;
+  query?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface PaginatedBlocksResult
+  extends PaginatedResult<Block, "blocks"> {}
+
+export interface BlockSearchResult extends PaginatedResult<Block, "blocks"> {}
 
 export const blockTypeDefs = gql`
   type BlockCreatorFull {
@@ -96,10 +109,30 @@ export const blockTypeDefs = gql`
     createdBy: BlockCreatorLimited!
   }
 
+  input BlocksByChannelInput {
+    channelId: ID!
+    query: String
+    limit: Int = 10
+    offset: Int = 0
+  }
+
+  input BlockSearchInput {
+    query: String
+    limit: Int = 10
+    offset: Int = 0
+  }
+
+  type BlockSearchResult {
+    blocks: [Block!]!
+    totalCount: Int!
+    hasMore: Boolean!
+  }
+
   extend type Query {
     block(id: ID!): Block
-    blocksByChannelId(channelId: ID!): [Block!]!
+    blocksByChannelId(input: BlocksByChannelInput!): BlockSearchResult!
     connectedChannels(blockId: ID!): [ConnectedChannel!]!
+    searchBlocks(input: BlockSearchInput!): BlockSearchResult!
   }
 
   extend type Mutation {

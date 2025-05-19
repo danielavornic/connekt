@@ -4,9 +4,13 @@ import { blockQueries } from "../queries/block";
 import {
   Block,
   BlockConnection,
+  BlocksByChannelInput,
   CreateBlockInput,
+  PaginatedBlocksResult,
   UpdateBlockInput,
 } from "../types/block";
+import { SearchPaginationInput } from "../types/common";
+import { executePaginatedQuery } from "./pagination";
 import { UrlService } from "./url";
 
 interface CreateBlockData extends CreateBlockInput {
@@ -72,15 +76,53 @@ export class BlockService {
     }
   }
 
-  async findBlocksByChannelId(channelId: string): Promise<Block[]> {
+  async searchBlocksByChannel(
+    input: BlocksByChannelInput
+  ): Promise<PaginatedBlocksResult> {
     const session = this.driver.session();
-
     try {
-      const result = await session.executeRead((tx) =>
-        tx.run(blockQueries.findBlocksByChannelId, { channelId })
+      const result = await executePaginatedQuery<Block>(
+        session,
+        blockQueries.searchBlocks,
+        {
+          channelId: input.channelId,
+          query: input.query,
+          limit: input.limit,
+          offset: input.offset,
+        }
       );
 
-      return result.records.map((record) => record.get("block"));
+      return {
+        blocks: result.items,
+        totalCount: result.totalCount,
+        hasMore: result.hasMore,
+      };
+    } finally {
+      await session.close();
+    }
+  }
+
+  async searchBlocks(
+    input: SearchPaginationInput
+  ): Promise<PaginatedBlocksResult> {
+    const session = this.driver.session();
+    try {
+      const result = await executePaginatedQuery<Block>(
+        session,
+        blockQueries.searchBlocks,
+        {
+          channelId: null,
+          query: input.query,
+          limit: input.limit,
+          offset: input.offset,
+        }
+      );
+
+      return {
+        blocks: result.items,
+        totalCount: result.totalCount,
+        hasMore: result.hasMore,
+      };
     } finally {
       await session.close();
     }
@@ -92,13 +134,11 @@ export class BlockService {
     try {
       const updatedAt = new Date().toISOString();
 
-      // If content is being updated, check if it's a URL
       let title = input.title;
       let description = input.description;
 
       if (input.content && UrlService.isValidUrl(input.content)) {
         const metadata = await UrlService.extractMetadata(input.content);
-        // Only use metadata if no title/description was provided in the update
         title = input.title || metadata.title;
         description = input.description || metadata.description;
       }

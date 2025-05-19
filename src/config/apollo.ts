@@ -8,6 +8,7 @@ import { channelResolvers } from "../resolvers/channel";
 import { verifyToken } from "../services/jwt";
 import { blockTypeDefs } from "../types/block";
 import { channelTypesDefs } from "../types/channel";
+import { commonTypeDefs } from "../types/common";
 import { Context } from "../types/context";
 import { userTypeDefs } from "../types/user";
 
@@ -23,7 +24,13 @@ const baseTypeDefs = `#graphql
 
 export const createApolloServer = () => {
   return new ApolloServer<Context>({
-    typeDefs: [baseTypeDefs, userTypeDefs, channelTypesDefs, blockTypeDefs],
+    typeDefs: [
+      baseTypeDefs,
+      commonTypeDefs,
+      userTypeDefs,
+      channelTypesDefs,
+      blockTypeDefs,
+    ],
     resolvers: [authResolvers, channelResolvers, blockResolvers],
   });
 };

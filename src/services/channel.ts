@@ -3,9 +3,13 @@ import { v4 as uuidv4 } from "uuid";
 import { channelQueries } from "../queries/channel";
 import {
   Channel,
+  ChannelsByUserInput,
   CreateChannelInput,
+  PaginatedChannelsResult,
   UpdateChannelInput,
 } from "../types/channel";
+import { SearchPaginationInput } from "../types/common";
+import { executePaginatedQuery } from "./pagination";
 
 interface CreateChannelData extends CreateChannelInput {
   createdBy: string;
@@ -61,14 +65,53 @@ export class ChannelService {
     }
   }
 
-  async findChannelsByUserId(userId: string): Promise<Channel[]> {
+  async searchChannelsByUser(
+    input: ChannelsByUserInput
+  ): Promise<PaginatedChannelsResult> {
     const session = this.driver.session();
     try {
-      const result = await session.run(channelQueries.findChannelsByUserId, {
-        userId,
-      });
+      const result = await executePaginatedQuery<Channel>(
+        session,
+        channelQueries.searchChannels,
+        {
+          userId: input.userId,
+          query: input.query,
+          limit: input.limit,
+          offset: input.offset,
+        }
+      );
 
-      return result.records.map((record) => record.get("channel")) || [];
+      return {
+        channels: result.items,
+        totalCount: result.totalCount,
+        hasMore: result.hasMore,
+      };
+    } finally {
+      await session.close();
+    }
+  }
+
+  async searchChannels(
+    input: SearchPaginationInput
+  ): Promise<PaginatedChannelsResult> {
+    const session = this.driver.session();
+    try {
+      const result = await executePaginatedQuery<Channel>(
+        session,
+        channelQueries.searchChannels,
+        {
+          userId: null,
+          query: input.query,
+          limit: input.limit,
+          offset: input.offset,
+        }
+      );
+
+      return {
+        channels: result.items,
+        totalCount: result.totalCount,
+        hasMore: result.hasMore,
+      };
     } finally {
       await session.close();
     }
