@@ -1,4 +1,4 @@
-import { Driver, int, Integer } from "neo4j-driver";
+import { Driver, Integer } from "neo4j-driver";
 import { v4 as uuidv4 } from "uuid";
 import { channelQueries } from "../queries/channel";
 import {
@@ -10,6 +10,7 @@ import {
   UpdateChannelInput,
 } from "../types/channel";
 import { SearchPaginationInput } from "../types/common";
+import { executePaginatedQuery } from "./pagination";
 
 interface CreateChannelData extends CreateChannelInput {
   createdBy: string;
@@ -70,23 +71,21 @@ export class ChannelService {
   ): Promise<ChannelsByUserResult> {
     const session = this.driver.session();
     try {
-      const result = await session.executeRead((tx) =>
-        tx.run(channelQueries.findChannelsByUserId, {
+      const result = await executePaginatedQuery<Channel>(
+        session,
+        channelQueries.searchChannels,
+        {
           userId: input.userId,
-          query: input.query ? `(?i).*${input.query}.*` : null,
-          limit: int(input.limit ?? 10),
-          offset: int(input.offset ?? 0),
-        })
+          query: input.query,
+          limit: input.limit,
+          offset: input.offset,
+        }
       );
 
-      const channels = result.records.map((record) => record.get("channel"));
-      const totalCount = result.records[0]?.get("totalCount")?.toNumber() || 0;
-      const hasMore = channels.length + (input.offset ?? 0) < totalCount;
-
       return {
-        channels,
-        totalCount,
-        hasMore,
+        channels: result.items,
+        totalCount: result.totalCount,
+        hasMore: result.hasMore,
       };
     } finally {
       await session.close();
@@ -98,22 +97,21 @@ export class ChannelService {
   ): Promise<ChannelSearchResult> {
     const session = this.driver.session();
     try {
-      const result = await session.executeRead((tx) =>
-        tx.run(channelQueries.searchChannels, {
-          query: `(?i).*${input.query}.*`,
-          limit: int(input.limit ?? 10),
-          offset: int(input.offset ?? 0),
-        })
+      const result = await executePaginatedQuery<Channel>(
+        session,
+        channelQueries.searchChannels,
+        {
+          userId: null, // Always provide userId parameter
+          query: input.query,
+          limit: input.limit,
+          offset: input.offset,
+        }
       );
 
-      const channels = result.records.map((record) => record.get("channel"));
-      const totalCount = result.records[0]?.get("totalCount")?.toNumber() || 0;
-      const hasMore = channels.length + (input.offset ?? 0) < totalCount;
-
       return {
-        channels,
-        totalCount,
-        hasMore,
+        channels: result.items,
+        totalCount: result.totalCount,
+        hasMore: result.hasMore,
       };
     } finally {
       await session.close();

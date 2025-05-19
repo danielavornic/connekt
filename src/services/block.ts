@@ -1,4 +1,4 @@
-import { Driver, int, Integer } from "neo4j-driver";
+import { Driver, Integer } from "neo4j-driver";
 import { v4 as uuidv4 } from "uuid";
 import { blockQueries } from "../queries/block";
 import {
@@ -11,6 +11,7 @@ import {
   UpdateBlockInput,
 } from "../types/block";
 import { SearchPaginationInput } from "../types/common";
+import { executePaginatedQuery } from "./pagination";
 import { UrlService } from "./url";
 
 interface CreateBlockData extends CreateBlockInput {
@@ -80,25 +81,22 @@ export class BlockService {
     input: BlocksByChannelInput
   ): Promise<BlocksByChannelResult> {
     const session = this.driver.session();
-
     try {
-      const result = await session.executeRead((tx) =>
-        tx.run(blockQueries.findBlocksByChannelId, {
+      const result = await executePaginatedQuery<Block>(
+        session,
+        blockQueries.searchBlocks,
+        {
           channelId: input.channelId,
-          query: input.query ? `(?i).*${input.query}.*` : null,
-          limit: int(input.limit ?? 10),
-          offset: int(input.offset ?? 0),
-        })
+          query: input.query,
+          limit: input.limit,
+          offset: input.offset,
+        }
       );
 
-      const blocks = result.records.map((record) => record.get("block"));
-      const totalCount = result.records[0]?.get("totalCount")?.toNumber() || 0;
-      const hasMore = blocks.length + (input.offset ?? 0) < totalCount;
-
       return {
-        blocks,
-        totalCount,
-        hasMore,
+        blocks: result.items,
+        totalCount: result.totalCount,
+        hasMore: result.hasMore,
       };
     } finally {
       await session.close();
@@ -108,22 +106,21 @@ export class BlockService {
   async searchBlocks(input: SearchPaginationInput): Promise<BlockSearchResult> {
     const session = this.driver.session();
     try {
-      const result = await session.executeRead((tx) =>
-        tx.run(blockQueries.searchBlocks, {
-          query: `(?i).*${input.query}.*`,
-          limit: int(input.limit ?? 10),
-          offset: int(input.offset ?? 0),
-        })
+      const result = await executePaginatedQuery<Block>(
+        session,
+        blockQueries.searchBlocks,
+        {
+          channelId: null,
+          query: input.query,
+          limit: input.limit,
+          offset: input.offset,
+        }
       );
 
-      const blocks = result.records.map((record) => record.get("block"));
-      const totalCount = result.records[0]?.get("totalCount")?.toNumber() || 0;
-      const hasMore = blocks.length + (input.offset ?? 0) < totalCount;
-
       return {
-        blocks,
-        totalCount,
-        hasMore,
+        blocks: result.items,
+        totalCount: result.totalCount,
+        hasMore: result.hasMore,
       };
     } finally {
       await session.close();
