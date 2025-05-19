@@ -27,7 +27,7 @@ export const blockResolvers = {
       { driver }: Context
     ) => {
       const blockService = new BlockService(driver);
-      return blockService.findBlocksByChannelId(input);
+      return blockService.searchBlocksByChannel(input);
     },
 
     searchBlocks: async (

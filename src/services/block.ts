@@ -76,7 +76,7 @@ export class BlockService {
     }
   }
 
-  async findBlocksByChannelId(
+  async searchBlocksByChannel(
     input: BlocksByChannelInput
   ): Promise<PaginatedBlocksResult> {
     const session = this.driver.session();

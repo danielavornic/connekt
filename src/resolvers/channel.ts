@@ -37,7 +37,7 @@ export const channelResolvers = {
       { driver }: Context
     ) => {
       const channelService = new ChannelService(driver);
-      return channelService.findChannelsByUserId(input);
+      return channelService.searchChannelsByUser(input);
     },
 
     searchChannels: async (

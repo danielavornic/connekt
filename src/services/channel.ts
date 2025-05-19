@@ -65,7 +65,7 @@ export class ChannelService {
     }
   }
 
-  async findChannelsByUserId(
+  async searchChannelsByUser(
     input: ChannelsByUserInput
   ): Promise<PaginatedChannelsResult> {
     const session = this.driver.session();
