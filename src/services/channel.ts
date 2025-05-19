@@ -4,9 +4,8 @@ import { channelQueries } from "../queries/channel";
 import {
   Channel,
   ChannelsByUserInput,
-  ChannelsByUserResult,
-  ChannelSearchResult,
   CreateChannelInput,
+  PaginatedChannelsResult,
   UpdateChannelInput,
 } from "../types/channel";
 import { SearchPaginationInput } from "../types/common";
@@ -68,7 +67,7 @@ export class ChannelService {
 
   async findChannelsByUserId(
     input: ChannelsByUserInput
-  ): Promise<ChannelsByUserResult> {
+  ): Promise<PaginatedChannelsResult> {
     const session = this.driver.session();
     try {
       const result = await executePaginatedQuery<Channel>(
@@ -94,14 +93,14 @@ export class ChannelService {
 
   async searchChannels(
     input: SearchPaginationInput
-  ): Promise<ChannelSearchResult> {
+  ): Promise<PaginatedChannelsResult> {
     const session = this.driver.session();
     try {
       const result = await executePaginatedQuery<Channel>(
         session,
         channelQueries.searchChannels,
         {
-          userId: null, // Always provide userId parameter
+          userId: null,
           query: input.query,
           limit: input.limit,
           offset: input.offset,

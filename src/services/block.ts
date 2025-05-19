@@ -5,9 +5,8 @@ import {
   Block,
   BlockConnection,
   BlocksByChannelInput,
-  BlocksByChannelResult,
-  BlockSearchResult,
   CreateBlockInput,
+  PaginatedBlocksResult,
   UpdateBlockInput,
 } from "../types/block";
 import { SearchPaginationInput } from "../types/common";
@@ -79,7 +78,7 @@ export class BlockService {
 
   async findBlocksByChannelId(
     input: BlocksByChannelInput
-  ): Promise<BlocksByChannelResult> {
+  ): Promise<PaginatedBlocksResult> {
     const session = this.driver.session();
     try {
       const result = await executePaginatedQuery<Block>(
@@ -103,7 +102,9 @@ export class BlockService {
     }
   }
 
-  async searchBlocks(input: SearchPaginationInput): Promise<BlockSearchResult> {
+  async searchBlocks(
+    input: SearchPaginationInput
+  ): Promise<PaginatedBlocksResult> {
     const session = this.driver.session();
     try {
       const result = await executePaginatedQuery<Block>(

@@ -34,7 +34,7 @@ export interface BlocksByChannelInput {
   offset?: number;
 }
 
-export interface BlocksByChannelResult
+export interface PaginatedBlocksResult
   extends PaginatedResult<Block, "blocks"> {}
 
 export interface BlockSearchResult extends PaginatedResult<Block, "blocks"> {}
@@ -116,12 +116,6 @@ export const blockTypeDefs = gql`
     offset: Int = 0
   }
 
-  type BlocksByChannelResult {
-    blocks: [Block!]!
-    totalCount: Int!
-    hasMore: Boolean!
-  }
-
   input BlockSearchInput {
     query: String
     limit: Int = 10
@@ -136,7 +130,7 @@ export const blockTypeDefs = gql`
 
   extend type Query {
     block(id: ID!): Block
-    blocksByChannelId(input: BlocksByChannelInput!): BlocksByChannelResult!
+    blocksByChannelId(input: BlocksByChannelInput!): BlockSearchResult!
     connectedChannels(blockId: ID!): [ConnectedChannel!]!
     searchBlocks(input: BlockSearchInput!): BlockSearchResult!
   }
