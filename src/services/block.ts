@@ -1,9 +1,11 @@
-import { Driver, Integer } from "neo4j-driver";
+import { Driver, int, Integer } from "neo4j-driver";
 import { v4 as uuidv4 } from "uuid";
 import { blockQueries } from "../queries/block";
 import {
   Block,
   BlockConnection,
+  BlocksByChannelInput,
+  BlocksByChannelResult,
   CreateBlockInput,
   UpdateBlockInput,
 } from "../types/block";
@@ -72,15 +74,30 @@ export class BlockService {
     }
   }
 
-  async findBlocksByChannelId(channelId: string): Promise<Block[]> {
+  async findBlocksByChannelId(
+    input: BlocksByChannelInput
+  ): Promise<BlocksByChannelResult> {
     const session = this.driver.session();
 
     try {
       const result = await session.executeRead((tx) =>
-        tx.run(blockQueries.findBlocksByChannelId, { channelId })
+        tx.run(blockQueries.findBlocksByChannelId, {
+          channelId: input.channelId,
+          query: input.query ? `(?i).*${input.query}.*` : null,
+          limit: int(input.limit ?? 10),
+          offset: int(input.offset ?? 0),
+        })
       );
 
-      return result.records.map((record) => record.get("block"));
+      const blocks = result.records.map((record) => record.get("block"));
+      const totalCount = result.records[0]?.get("totalCount")?.toNumber() || 0;
+      const hasMore = blocks.length + (input.offset ?? 0) < totalCount;
+
+      return {
+        blocks,
+        totalCount,
+        hasMore,
+      };
     } finally {
       await session.close();
     }
@@ -92,13 +109,11 @@ export class BlockService {
     try {
       const updatedAt = new Date().toISOString();
 
-      // If content is being updated, check if it's a URL
       let title = input.title;
       let description = input.description;
 
       if (input.content && UrlService.isValidUrl(input.content)) {
         const metadata = await UrlService.extractMetadata(input.content);
-        // Only use metadata if no title/description was provided in the update
         title = input.title || metadata.title;
         description = input.description || metadata.description;
       }

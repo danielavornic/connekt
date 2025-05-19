@@ -21,6 +21,19 @@ export interface UpdateChannelInput extends DeleteChannelInput {
   description?: string;
 }
 
+export interface ChannelsByUserInput {
+  userId: string;
+  query?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface ChannelsByUserResult {
+  channels: Channel[];
+  totalCount: number;
+  hasMore: boolean;
+}
+
 export const channelTypesDefs = `
   # for authenticated user's own data
   type ChannelCreatorFull {
@@ -88,10 +101,23 @@ export const channelTypesDefs = `
     channelId: String!
   }
 
+  input ChannelsByUserInput {
+    userId: ID!
+    query: String
+    limit: Int = 10
+    offset: Int = 0
+  }
+
+  type ChannelsByUserResult {
+    channels: [Channel!]!
+    totalCount: Int!
+    hasMore: Boolean!
+  }
+
   type Query {
     myChannels: [MyChannel!]!
     channel(input: FindChannelByIdInput!): PublicChannel
-    channelsByUserId(input: FindChannelsByUserIdInput!): [PublicChannel!]!
+    channelsByUserId(input: ChannelsByUserInput!): ChannelsByUserResult!
   }
 
   type DeleteChannelResponse {

@@ -2,6 +2,7 @@ import { BlockService } from "../services/block";
 import { ChannelService } from "../services/channel";
 import {
   BlockConnection,
+  BlocksByChannelInput,
   CreateBlockInput,
   UpdateBlockInput,
 } from "../types/block";
@@ -21,11 +22,11 @@ export const blockResolvers = {
 
     blocksByChannelId: async (
       _: any,
-      { channelId }: { channelId: string },
+      { input }: { input: BlocksByChannelInput },
       { driver }: Context
     ) => {
       const blockService = new BlockService(driver);
-      return blockService.findBlocksByChannelId(channelId);
+      return blockService.findBlocksByChannelId(input);
     },
 
     connectedChannels: async (

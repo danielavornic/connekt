@@ -1,8 +1,10 @@
-import { Driver, Integer } from "neo4j-driver";
+import { Driver, int, Integer } from "neo4j-driver";
 import { v4 as uuidv4 } from "uuid";
 import { channelQueries } from "../queries/channel";
 import {
   Channel,
+  ChannelsByUserInput,
+  ChannelsByUserResult,
   CreateChannelInput,
   UpdateChannelInput,
 } from "../types/channel";
@@ -61,14 +63,29 @@ export class ChannelService {
     }
   }
 
-  async findChannelsByUserId(userId: string): Promise<Channel[]> {
+  async findChannelsByUserId(
+    input: ChannelsByUserInput
+  ): Promise<ChannelsByUserResult> {
     const session = this.driver.session();
     try {
-      const result = await session.run(channelQueries.findChannelsByUserId, {
-        userId,
-      });
+      const result = await session.executeRead((tx) =>
+        tx.run(channelQueries.findChannelsByUserId, {
+          userId: input.userId,
+          query: input.query ? `(?i).*${input.query}.*` : null,
+          limit: int(input.limit ?? 10),
+          offset: int(input.offset ?? 0),
+        })
+      );
 
-      return result.records.map((record) => record.get("channel")) || [];
+      const channels = result.records.map((record) => record.get("channel"));
+      const totalCount = result.records[0]?.get("totalCount")?.toNumber() || 0;
+      const hasMore = channels.length + (input.offset ?? 0) < totalCount;
+
+      return {
+        channels,
+        totalCount,
+        hasMore,
+      };
     } finally {
       await session.close();
     }

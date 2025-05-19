@@ -26,6 +26,19 @@ export interface UpdateBlockInput extends BlockConnection {
   content?: string;
 }
 
+export interface BlocksByChannelInput {
+  channelId: string;
+  query?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface BlocksByChannelResult {
+  blocks: Block[];
+  totalCount: number;
+  hasMore: boolean;
+}
+
 export const blockTypeDefs = gql`
   type BlockCreatorFull {
     id: ID!
@@ -96,9 +109,22 @@ export const blockTypeDefs = gql`
     createdBy: BlockCreatorLimited!
   }
 
+  input BlocksByChannelInput {
+    channelId: ID!
+    query: String
+    limit: Int = 10
+    offset: Int = 0
+  }
+
+  type BlocksByChannelResult {
+    blocks: [Block!]!
+    totalCount: Int!
+    hasMore: Boolean!
+  }
+
   extend type Query {
     block(id: ID!): Block
-    blocksByChannelId(channelId: ID!): [Block!]!
+    blocksByChannelId(input: BlocksByChannelInput!): BlocksByChannelResult!
     connectedChannels(blockId: ID!): [ConnectedChannel!]!
   }
 

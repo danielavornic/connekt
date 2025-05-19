@@ -1,5 +1,6 @@
 import { ChannelService } from "../services/channel";
 import {
+  ChannelsByUserInput,
   CreateChannelInput,
   DeleteChannelInput,
   UpdateChannelInput,
@@ -31,11 +32,11 @@ export const channelResolvers = {
 
     channelsByUserId: async (
       _: any,
-      { input }: { input: { userId: string } },
+      { input }: { input: ChannelsByUserInput },
       { driver }: Context
     ) => {
       const channelService = new ChannelService(driver);
-      return channelService.findChannelsByUserId(input.userId);
+      return channelService.findChannelsByUserId(input);
     },
   },
 
