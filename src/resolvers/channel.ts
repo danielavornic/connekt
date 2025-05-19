@@ -5,6 +5,7 @@ import {
   DeleteChannelInput,
   UpdateChannelInput,
 } from "../types/channel";
+import { SearchPaginationInput } from "../types/common";
 import { Context } from "../types/context";
 import { UserRole } from "../types/user";
 
@@ -37,6 +38,15 @@ export const channelResolvers = {
     ) => {
       const channelService = new ChannelService(driver);
       return channelService.findChannelsByUserId(input);
+    },
+
+    searchChannels: async (
+      _: any,
+      { input }: { input: SearchPaginationInput },
+      { driver }: Context
+    ) => {
+      const channelService = new ChannelService(driver);
+      return channelService.searchChannels(input);
     },
   },
 

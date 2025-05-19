@@ -6,6 +6,7 @@ import {
   CreateBlockInput,
   UpdateBlockInput,
 } from "../types/block";
+import { SearchPaginationInput } from "../types/common";
 import { Context } from "../types/context";
 import { UserRole } from "../types/user";
 
@@ -27,6 +28,15 @@ export const blockResolvers = {
     ) => {
       const blockService = new BlockService(driver);
       return blockService.findBlocksByChannelId(input);
+    },
+
+    searchBlocks: async (
+      _: any,
+      { input }: { input: SearchPaginationInput },
+      { driver }: Context
+    ) => {
+      const blockService = new BlockService(driver);
+      return blockService.searchBlocks(input);
     },
 
     connectedChannels: async (

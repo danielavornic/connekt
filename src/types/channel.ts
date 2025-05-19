@@ -1,3 +1,5 @@
+import { gql } from "graphql-tag";
+import { PaginatedResult, SearchPaginationInput } from "./common";
 import { User } from "./user";
 
 export interface CreateChannelInput {
@@ -28,13 +30,15 @@ export interface ChannelsByUserInput {
   offset?: number;
 }
 
-export interface ChannelsByUserResult {
-  channels: Channel[];
-  totalCount: number;
-  hasMore: boolean;
-}
+export interface ChannelsByUserResult
+  extends PaginatedResult<Channel, "channels"> {}
 
-export const channelTypesDefs = `
+export interface ChannelSearchInput extends SearchPaginationInput {}
+
+export interface ChannelSearchResult
+  extends PaginatedResult<Channel, "channels"> {}
+
+export const channelTypesDefs = gql`
   # for authenticated user's own data
   type ChannelCreatorFull {
     id: ID!
@@ -58,6 +62,7 @@ export const channelTypesDefs = `
     description: String
     createdAt: String!
     updatedAt: String!
+    createdBy: ChannelCreatorLimited!
   }
 
   type MyChannel {
@@ -114,10 +119,23 @@ export const channelTypesDefs = `
     hasMore: Boolean!
   }
 
+  input ChannelSearchInput {
+    query: String
+    limit: Int = 10
+    offset: Int = 0
+  }
+
+  type ChannelSearchResult {
+    channels: [Channel!]!
+    totalCount: Int!
+    hasMore: Boolean!
+  }
+
   type Query {
     myChannels: [MyChannel!]!
     channel(input: FindChannelByIdInput!): PublicChannel
     channelsByUserId(input: ChannelsByUserInput!): ChannelsByUserResult!
+    searchChannels(input: ChannelSearchInput!): ChannelSearchResult!
   }
 
   type DeleteChannelResponse {

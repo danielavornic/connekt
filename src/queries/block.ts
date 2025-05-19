@@ -96,6 +96,36 @@ export const blockQueries = {
     LIMIT $limit
   `,
 
+  searchBlocks: `
+    MATCH (u:User)-[:CREATED]->(b:Block)
+    WHERE b.title =~ $query OR b.description =~ $query OR b.content =~ $query
+    WITH count(b) as totalCount
+    MATCH (u:User)-[:CREATED]->(b:Block)-[:CONNECTED_TO]->(ch:Channel)
+    WHERE b.title =~ $query OR b.description =~ $query OR b.content =~ $query
+    RETURN {
+      id: b.id,
+      title: b.title,
+      description: b.description,
+      content: b.content,
+      createdAt: b.createdAt,
+      updatedAt: b.updatedAt,
+      channel: {
+        id: ch.id,
+        title: ch.title,
+        description: ch.description
+      },
+      createdBy: {
+        id: u.id,
+        username: u.username,
+        createdAt: u.createdAt
+      }
+    } as block,
+    totalCount
+    ORDER BY b.createdAt DESC
+    SKIP $offset
+    LIMIT $limit
+  `,
+
   updateBlock: `
     MATCH (u:User)-[:CREATED]->(b:Block {id: $blockId})-[:CONNECTED_TO]->(ch:Channel)
     SET b += {

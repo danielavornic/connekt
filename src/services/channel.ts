@@ -5,9 +5,11 @@ import {
   Channel,
   ChannelsByUserInput,
   ChannelsByUserResult,
+  ChannelSearchResult,
   CreateChannelInput,
   UpdateChannelInput,
 } from "../types/channel";
+import { SearchPaginationInput } from "../types/common";
 
 interface CreateChannelData extends CreateChannelInput {
   createdBy: string;
@@ -72,6 +74,33 @@ export class ChannelService {
         tx.run(channelQueries.findChannelsByUserId, {
           userId: input.userId,
           query: input.query ? `(?i).*${input.query}.*` : null,
+          limit: int(input.limit ?? 10),
+          offset: int(input.offset ?? 0),
+        })
+      );
+
+      const channels = result.records.map((record) => record.get("channel"));
+      const totalCount = result.records[0]?.get("totalCount")?.toNumber() || 0;
+      const hasMore = channels.length + (input.offset ?? 0) < totalCount;
+
+      return {
+        channels,
+        totalCount,
+        hasMore,
+      };
+    } finally {
+      await session.close();
+    }
+  }
+
+  async searchChannels(
+    input: SearchPaginationInput
+  ): Promise<ChannelSearchResult> {
+    const session = this.driver.session();
+    try {
+      const result = await session.executeRead((tx) =>
+        tx.run(channelQueries.searchChannels, {
+          query: `(?i).*${input.query}.*`,
           limit: int(input.limit ?? 10),
           offset: int(input.offset ?? 0),
         })

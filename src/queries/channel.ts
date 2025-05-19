@@ -81,6 +81,40 @@ export const channelQueries = {
     LIMIT $limit
   `,
 
+  searchChannels: `
+    MATCH (u:User)-[:CREATED]->(c:Channel)
+    WHERE c.title =~ $query OR c.description =~ $query
+    WITH count(c) as totalCount
+    MATCH (u:User)-[:CREATED]->(c:Channel)
+    WHERE c.title =~ $query OR c.description =~ $query
+    OPTIONAL MATCH (b:Block)-[:CONNECTED_TO]->(c)
+    WITH c, u, totalCount, collect(b) as blocks
+    RETURN {
+      id: c.id,
+      title: c.title,
+      description: c.description,
+      createdAt: c.createdAt,
+      updatedAt: c.updatedAt,
+      blocks: [block in blocks | {
+        id: block.id,
+        title: block.title,
+        description: block.description,
+        content: block.content,
+        createdAt: block.createdAt,
+        updatedAt: block.updatedAt
+      }],
+      createdBy: {
+        id: u.id,
+        username: u.username,
+        createdAt: u.createdAt
+      }
+    } as channel,
+    totalCount
+    ORDER BY c.createdAt DESC
+    SKIP $offset
+    LIMIT $limit
+  `,
+
   updateChannel: `
     MATCH (u:User)-[:CREATED]->(c:Channel {id: $channelId})
     SET c += {
