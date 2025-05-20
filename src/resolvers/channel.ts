@@ -6,16 +6,21 @@ import {
 } from "../types/channel";
 import { SearchPaginationInput } from "../types/common";
 import { Context } from "../types/context";
-import { UserRole } from "../types/user";
+import {
+  checkResourceOwnership,
+  requireAuth,
+  requireCreator,
+} from "../utils/auth";
 
 export const channelResolvers = {
   Query: {
     channel: async (
       _: any,
       { channelId }: { channelId: string },
-      { driver }: Context
+      context: Context
     ) => {
-      const channelService = new ChannelService(driver);
+      requireAuth(context);
+      const channelService = new ChannelService(context.driver);
       const channel = await channelService.findChannelById(channelId);
 
       if (!channel) throw new Error("Channel not found");
@@ -23,28 +28,29 @@ export const channelResolvers = {
       return channel;
     },
 
-    myChannels: async (_: any, __: any, { driver, user }: Context) => {
-      if (!user) throw new Error("Not authenticated");
-
-      const channelService = new ChannelService(driver);
+    myChannels: async (_: any, __: any, context: Context) => {
+      const user = requireAuth(context);
+      const channelService = new ChannelService(context.driver);
       return channelService.findMyChannels(user.userId);
     },
 
     channelsByUserId: async (
       _: any,
       { input }: { input: ChannelsByUserInput },
-      { driver }: Context
+      context: Context
     ) => {
-      const channelService = new ChannelService(driver);
+      requireAuth(context);
+      const channelService = new ChannelService(context.driver);
       return channelService.searchChannelsByUser(input);
     },
 
     searchChannels: async (
       _: any,
       { input }: { input: SearchPaginationInput },
-      { driver }: Context
+      context: Context
     ) => {
-      const channelService = new ChannelService(driver);
+      requireAuth(context);
+      const channelService = new ChannelService(context.driver);
       return channelService.searchChannels(input);
     },
   },
@@ -53,15 +59,10 @@ export const channelResolvers = {
     createChannel: async (
       _: any,
       { input }: { input: CreateChannelInput },
-      { driver, user }: Context
+      context: Context
     ) => {
-      if (!user) throw new Error("Not authenticated");
-
-      if (user.role !== UserRole.CREATOR) {
-        throw new Error("User is not a creator");
-      }
-
-      const channelService = new ChannelService(driver);
+      const user = requireCreator(context);
+      const channelService = new ChannelService(context.driver);
       return channelService.createChannel({
         ...input,
         createdBy: user.userId,
@@ -71,17 +72,14 @@ export const channelResolvers = {
     updateChannel: async (
       _: any,
       { input }: { input: UpdateChannelInput },
-      { driver, user }: Context
+      context: Context
     ) => {
-      if (!user) throw new Error("Not authenticated");
-
-      const channelService = new ChannelService(driver);
+      const user = requireAuth(context);
+      const channelService = new ChannelService(context.driver);
       const channel = await channelService.findChannelById(input.channelId);
-      if (!channel) throw new Error("Channel not found");
 
-      if (channel.createdBy.id !== user.userId) {
-        throw new Error("User is not the creator of the channel");
-      }
+      if (!channel) throw new Error("Channel not found");
+      checkResourceOwnership(channel, user.userId);
 
       const updatedChannel = await channelService.updateChannel(input);
       return updatedChannel;
@@ -90,18 +88,14 @@ export const channelResolvers = {
     deleteChannel: async (
       _: any,
       { channelId }: { channelId: string },
-      { driver, user }: Context
+      context: Context
     ) => {
-      if (!user) throw new Error("Not authenticated");
-
-      const channelService = new ChannelService(driver);
-
+      const user = requireAuth(context);
+      const channelService = new ChannelService(context.driver);
       const channel = await channelService.findChannelById(channelId);
-      if (!channel) throw new Error("Channel not found");
 
-      if (channel.createdBy.id !== user.userId) {
-        throw new Error("User is not the creator of the channel");
-      }
+      if (!channel) throw new Error("Channel not found");
+      checkResourceOwnership(channel, user.userId);
 
       const success = await channelService.deleteChannel(channelId);
       if (!success) {
