@@ -8,16 +8,23 @@ import {
 } from "../types/block";
 import { SearchPaginationInput } from "../types/common";
 import { Context } from "../types/context";
-import { UserRole } from "../types/user";
+import {
+  checkBlockChannelPermissions,
+  checkBlockDeletionPermissions,
+  checkResourceOwnership,
+  requireAuth,
+  requireCreator,
+} from "../utils/auth";
 
 export const blockResolvers = {
   Query: {
     block: async (
       _: any,
       { blockId }: { blockId: string },
-      { driver }: Context
+      context: Context
     ) => {
-      const blockService = new BlockService(driver);
+      requireAuth(context);
+      const blockService = new BlockService(context.driver);
       const block = await blockService.findBlockById(blockId);
 
       if (!block) throw new Error("Block not found");
@@ -28,27 +35,30 @@ export const blockResolvers = {
     blocksByChannelId: async (
       _: any,
       { input }: { input: BlocksByChannelInput },
-      { driver }: Context
+      context: Context
     ) => {
-      const blockService = new BlockService(driver);
+      requireAuth(context);
+      const blockService = new BlockService(context.driver);
       return blockService.searchBlocksByChannel(input);
     },
 
     searchBlocks: async (
       _: any,
       { input }: { input: SearchPaginationInput },
-      { driver }: Context
+      context: Context
     ) => {
-      const blockService = new BlockService(driver);
+      requireAuth(context);
+      const blockService = new BlockService(context.driver);
       return blockService.searchBlocks(input);
     },
 
     connectedChannels: async (
       _: any,
       { blockId }: { blockId: string },
-      { driver }: Context
+      context: Context
     ) => {
-      const blockService = new BlockService(driver);
+      requireAuth(context);
+      const blockService = new BlockService(context.driver);
       return blockService.findConnectedChannels(blockId);
     },
   },
@@ -57,22 +67,16 @@ export const blockResolvers = {
     createBlock: async (
       _: any,
       { input }: { input: CreateBlockInput },
-      { driver, user }: Context
+      context: Context
     ) => {
-      if (!user) throw new Error("Not authenticated");
-
-      if (user.role !== UserRole.CREATOR) {
-        throw new Error("User is not a creator");
-      }
-
-      const channelService = new ChannelService(driver);
+      const user = requireCreator(context);
+      const channelService = new ChannelService(context.driver);
       const channel = await channelService.findChannelById(input.channelId);
-      if (!channel) throw new Error("Channel not found");
-      if (channel.createdBy.id !== user.userId) {
-        throw new Error("User is not the creator of the channel");
-      }
 
-      const blockService = new BlockService(driver);
+      if (!channel) throw new Error("Channel not found");
+      checkResourceOwnership(channel, user.userId);
+
+      const blockService = new BlockService(context.driver);
       return blockService.createBlock({
         ...input,
         createdBy: user.userId,
@@ -82,18 +86,14 @@ export const blockResolvers = {
     updateBlock: async (
       _: any,
       { input }: { input: UpdateBlockInput },
-      { driver, user }: Context
+      context: Context
     ) => {
-      if (!user) throw new Error("Not authenticated");
-
-      const blockService = new BlockService(driver);
+      const user = requireAuth(context);
+      const blockService = new BlockService(context.driver);
       const block = await blockService.findBlockById(input.blockId);
 
       if (!block) throw new Error("Block not found");
-
-      if (block.createdBy.id !== user.userId) {
-        throw new Error("User is not the creator of the block");
-      }
+      checkResourceOwnership(block, user.userId);
 
       return blockService.updateBlock(input);
     },
@@ -101,30 +101,20 @@ export const blockResolvers = {
     deleteBlock: async (
       _: any,
       { input }: { input: BlockConnection },
-      { driver, user }: Context
+      context: Context
     ) => {
-      if (!user) throw new Error("Not authenticated");
-
-      const blockService = new BlockService(driver);
+      const user = requireAuth(context);
+      const blockService = new BlockService(context.driver);
 
       const connectionInfo = await blockService.getBlockConnectionInfo(
         input.blockId,
         input.channelId
       );
 
-      if (!connectionInfo) throw new Error("Block not found");
-      if (!connectionInfo.hasTargetChannel)
-        throw new Error("Block is not connected to this channel");
+      const { isBlockCreator, shouldCompletelyDelete } =
+        checkBlockDeletionPermissions(connectionInfo, user.userId);
 
-      const isBlockCreator = connectionInfo.blockCreatorId === user.userId;
-      const isChannelCreator = connectionInfo.channelCreatorId === user.userId;
-
-      if (!isBlockCreator && !isChannelCreator) {
-        throw new Error("Not authorized to remove this block");
-      }
-
-      // block creator deleting their block that's only in one channel
-      if (isBlockCreator && connectionInfo.connectionCount === 1) {
+      if (shouldCompletelyDelete) {
         const success = await blockService.deleteBlockCompletely(input.blockId);
         if (!success) throw new Error("Failed to delete block");
         return {
@@ -133,9 +123,6 @@ export const blockResolvers = {
         };
       }
 
-      // 1. block creator removing from one of many channels
-      // 2. channel owner removing someone else's block
-      // 3. block creator removing from someone else's channel
       const success = await blockService.removeBlockConnection(
         input.blockId,
         input.channelId
@@ -153,16 +140,11 @@ export const blockResolvers = {
     connectBlockToChannel: async (
       _: any,
       { input }: { input: BlockConnection },
-      { driver, user }: Context
+      context: Context
     ) => {
-      if (!user) throw new Error("Not authenticated");
-
-      if (user.role !== UserRole.CREATOR) {
-        throw new Error("User is not a creator");
-      }
-
-      const blockService = new BlockService(driver);
-      const channelService = new ChannelService(driver);
+      const user = requireCreator(context);
+      const blockService = new BlockService(context.driver);
+      const channelService = new ChannelService(context.driver);
 
       const block = await blockService.findBlockById(input.blockId);
       if (!block) throw new Error("Block not found");
@@ -170,14 +152,7 @@ export const blockResolvers = {
       const channel = await channelService.findChannelById(input.channelId);
       if (!channel) throw new Error("Channel not found");
 
-      if (
-        block.createdBy.id !== user.userId &&
-        channel.createdBy.id !== user.userId
-      ) {
-        throw new Error(
-          "User must be the creator of either the block or the channel"
-        );
-      }
+      checkBlockChannelPermissions(block, channel, user.userId);
 
       return blockService.connectBlockToChannel(input.blockId, input.channelId);
     },
