@@ -6,6 +6,12 @@ export const createNeo4jDriver = (): Driver => {
     neo4j.auth.basic(
       process.env.NEO4J_USER || "neo4j",
       process.env.NEO4J_PASSWORD || "password"
-    )
+    ),
+    {
+      maxConnectionLifetime: 3 * 60 * 60 * 1000,
+      maxConnectionPoolSize: 50,
+      connectionAcquisitionTimeout: 2 * 60 * 1000,
+      disableLosslessIntegers: true,
+    }
   );
 };
