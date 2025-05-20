@@ -54,12 +54,12 @@ me: User!
 
 # Channels
 myChannels: [MyChannel!]!
-channel(input: FindChannelByIdInput!): PublicChannel
+channel(channelId: ID!): PublicChannel
 channelsByUserId(input: ChannelsByUserInput!): ChannelSearchResult!
 searchChannels(input: ChannelSearchInput!): ChannelSearchResult!
 
 # Blocks
-block(id: ID!): Block
+block(blockId: ID!): Block
 blocksByChannelId(input: BlocksByChannelInput!): BlockSearchResult!
 searchBlocks(input: BlockSearchInput!): BlockSearchResult!
 ```
@@ -74,7 +74,7 @@ login(input: LoginInput!): AuthPayload!
 # Channels
 createChannel(input: CreateChannelInput!): MyChannel
 updateChannel(input: UpdateChannelInput!): MyChannel
-deleteChannel(input: DeleteChannelInput!): DeleteChannelResponse!
+deleteChannel(channelId: ID!): DeleteChannelResponse!
 
 # Blocks
 createBlock(input: CreateBlockInput!): MyBlock!
