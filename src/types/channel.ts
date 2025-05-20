@@ -130,14 +130,6 @@ export const channelTypesDefs = gql`
   }
 
   """
-  Input for finding a channel by ID
-  """
-  input FindChannelByIdInput {
-    "ID of the channel to find"
-    channelId: String!
-  }
-
-  """
   Input for finding channels by user ID
   """
   input FindChannelsByUserIdInput {
@@ -156,14 +148,6 @@ export const channelTypesDefs = gql`
     title: String
     "New description for the channel"
     description: String
-  }
-
-  """
-  Input for deleting a channel
-  """
-  input DeleteChannelInput {
-    "ID of the channel to delete"
-    channelId: String!
   }
 
   """
@@ -218,7 +202,7 @@ export const channelTypesDefs = gql`
     "Get channels owned by the authenticated user"
     myChannels: [MyChannel!]!
     "Get a specific channel by ID"
-    channel(input: FindChannelByIdInput!): PublicChannel
+    channel(channelId: ID!): PublicChannel
     "Get channels owned by a specific user"
     channelsByUserId(input: ChannelsByUserInput!): ChannelSearchResult!
     "Search for channels"
@@ -231,6 +215,6 @@ export const channelTypesDefs = gql`
     "Update an existing channel"
     updateChannel(input: UpdateChannelInput!): MyChannel
     "Delete a channel"
-    deleteChannel(input: DeleteChannelInput!): DeleteChannelResponse!
+    deleteChannel(channelId: ID!): DeleteChannelResponse!
   }
 `;

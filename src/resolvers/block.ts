@@ -12,9 +12,13 @@ import { UserRole } from "../types/user";
 
 export const blockResolvers = {
   Query: {
-    block: async (_: any, { id }: { id: string }, { driver }: Context) => {
+    block: async (
+      _: any,
+      { blockId }: { blockId: string },
+      { driver }: Context
+    ) => {
       const blockService = new BlockService(driver);
-      const block = await blockService.findBlockById(id);
+      const block = await blockService.findBlockById(blockId);
 
       if (!block) throw new Error("Block not found");
 

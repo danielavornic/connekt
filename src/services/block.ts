@@ -182,7 +182,10 @@ export class BlockService {
 
       return {
         ...info,
-        connectionCount: (info.connectionCount as Integer).toNumber(),
+        connectionCount:
+          info.connectionCount instanceof Integer
+            ? info.connectionCount.toNumber()
+            : Number(info.connectionCount) || 0,
       };
     } finally {
       await session.close();

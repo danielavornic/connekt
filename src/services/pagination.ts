@@ -1,4 +1,4 @@
-import { Session, int } from "neo4j-driver";
+import { int, Integer, Session } from "neo4j-driver";
 
 export interface PaginatedQueryResult<T> {
   items: T[];
@@ -31,7 +31,11 @@ export async function executePaginatedQuery<T>(
   const result = await session.executeRead((tx) => tx.run(query, queryParams));
 
   const items = result.records.map((record) => record.get("result"));
-  const totalCount = result.records[0]?.get("totalCount")?.toNumber() || 0;
+  const totalCountValue = result.records[0]?.get("totalCount");
+  const totalCount =
+    totalCountValue instanceof Integer
+      ? totalCountValue.toNumber()
+      : Number(totalCountValue) || 0;
   const hasMore = items.length + (params.offset ?? 0) < totalCount;
 
   return { items, totalCount, hasMore };

@@ -10,7 +10,21 @@ export const channelQueries = {
     WITH c
     MATCH (u:User {id: $createdBy})
     CREATE (u)-[:CREATED]->(c)
-    RETURN c
+    RETURN {
+      id: c.id,
+      title: c.title,
+      description: c.description,
+      createdAt: c.createdAt,
+      updatedAt: c.updatedAt,
+      createdBy: {
+        id: u.id,
+        username: u.username,
+        email: u.email,
+        role: u.role,
+        createdAt: u.createdAt,
+        updatedAt: u.updatedAt
+      }
+    } as channel
   `,
 
   findChannelById: `

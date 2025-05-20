@@ -2,7 +2,6 @@ import { ChannelService } from "../services/channel";
 import {
   ChannelsByUserInput,
   CreateChannelInput,
-  DeleteChannelInput,
   UpdateChannelInput,
 } from "../types/channel";
 import { SearchPaginationInput } from "../types/common";
@@ -13,11 +12,11 @@ export const channelResolvers = {
   Query: {
     channel: async (
       _: any,
-      { input }: { input: { channelId: string } },
+      { channelId }: { channelId: string },
       { driver }: Context
     ) => {
       const channelService = new ChannelService(driver);
-      const channel = await channelService.findChannelById(input.channelId);
+      const channel = await channelService.findChannelById(channelId);
 
       if (!channel) throw new Error("Channel not found");
 
@@ -90,21 +89,21 @@ export const channelResolvers = {
 
     deleteChannel: async (
       _: any,
-      { input }: { input: DeleteChannelInput },
+      { channelId }: { channelId: string },
       { driver, user }: Context
     ) => {
       if (!user) throw new Error("Not authenticated");
 
       const channelService = new ChannelService(driver);
 
-      const channel = await channelService.findChannelById(input.channelId);
+      const channel = await channelService.findChannelById(channelId);
       if (!channel) throw new Error("Channel not found");
 
       if (channel.createdBy.id !== user.userId) {
         throw new Error("User is not the creator of the channel");
       }
 
-      const success = await channelService.deleteChannel(input.channelId);
+      const success = await channelService.deleteChannel(channelId);
       if (!success) {
         throw new Error("Failed to delete channel");
       }

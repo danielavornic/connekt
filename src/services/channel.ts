@@ -32,7 +32,7 @@ export class ChannelService {
         now,
       });
 
-      return result.records[0].get("c").properties as Channel;
+      return result.records[0].get("channel") as Channel;
     } finally {
       await session.close();
     }

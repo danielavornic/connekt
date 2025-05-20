@@ -220,7 +220,7 @@ export const blockTypeDefs = gql`
 
   extend type Query {
     "Get a specific block by ID"
-    block(id: ID!): Block
+    block(blockId: ID!): Block
     "Get blocks in a specific channel"
     blocksByChannelId(input: BlocksByChannelInput!): BlockSearchResult!
     "Get channels connected to a block"
