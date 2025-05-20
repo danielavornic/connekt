@@ -29,10 +29,6 @@ export const requireCreator = (context: Context) => {
   return user;
 };
 
-export const isCreator = (context: Context) => {
-  return context.user?.role === UserRole.CREATOR;
-};
-
 export const checkResourceOwnership = (
   resource: ResourceOwnership,
   userId: string
